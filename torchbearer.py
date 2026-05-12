@@ -2,8 +2,8 @@
 CS 460 – Algorithms: Final Programming Assignment
 The Torchbearer
 
-Student Name: ___________________________
-Student ID:   ___________________________
+Student Name: _______Alan Vo____________________
+Student ID:   _______132574829___________
 
 INSTRUCTIONS
 ------------
@@ -32,9 +32,23 @@ def explain_problem():
         Your Part 1 README answers, written as a string.
         Must match what you wrote in README Part 1.
 
-    TODO
     """
-    return "TODO"
+    return (
+         "Why a single shortest-path run from S is not enough: "
+        "Dijkstra from S tells us the cheapest cost to reach every node, but it cannot "
+        "decide which relic to visit first — the ordering of relic visits is a decision "
+        "it never makes.\n\n"
+
+        "What decision remains after all inter-location costs are known: "
+        "Even with a complete table of cheapest costs between every pair of relevant "
+        "locations, we still must decide the order in which the relics are visited, "
+        "since different orderings produce different total costs.\n\n"
+
+        "Why this requires a search over orders: "
+        "Because the optimal total cost depends on the sequence in which relics are "
+        "collected, and no local greedy rule reliably identifies the globally cheapest "
+        "sequence, the engine must search over the space of all possible relic orderings."
+    )
 
 
 # =============================================================================
@@ -56,7 +70,12 @@ def select_sources(spawn, relics, exit_node):
 
     TODO
     """
-    pass
+    sources = set()
+    sources.add(spawn)
+    for r in relics:
+        sources.add(r)
+    sources.add(exit_node)
+    return list(sources)
 
 
 def run_dijkstra(graph, source):
@@ -75,7 +94,25 @@ def run_dijkstra(graph, source):
 
     TODO
     """
-    pass
+    dist = {node: float('inf') for node in graph}
+    dist[source] = 0
+
+    # Min-heap entries are (cost, node).
+    heap = [(0, source)]
+
+    while heap:
+        cost_u, u = heapq.heappop(heap)
+
+        if cost_u > dist[u]:
+            continue
+
+        for v, edge_cost in graph[u]:
+            new_cost = dist[u] + edge_cost
+            if new_cost < dist[v]:
+                dist[v] = new_cost
+                heapq.heappush(heap, (new_cost, v))
+
+    return dist
 
 
 def precompute_distances(graph, spawn, relics, exit_node):
@@ -95,7 +132,11 @@ def precompute_distances(graph, spawn, relics, exit_node):
 
     TODO
     """
-    pass
+    sources = select_sources(spawn, relics, exit_node)
+    dist_table = {}
+    for src in sources:
+        dist_table[src] = run_dijkstra(graph, src)
+    return dist_table
 
 
 # =============================================================================
