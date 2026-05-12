@@ -1,7 +1,7 @@
 # The Torchbearer
 
-**Student Name:** ___________________________
-**Student ID:** ___________________________
+**Student Name:** Alan Vo
+**Student ID:** _______132574829_____________
 **Course:** CS 460 – Algorithms | Spring 2026
 
 > This README is your project documentation. Write it the way a developer would document
@@ -17,13 +17,13 @@
 > per question. Each bullet should be 1-2 sentences max.
 
 - **Why a single shortest-path run from S is not enough:**
-  _Your answer here._
+  Dijkstra from S yields the minimum cost to reach every dungeon node, but it cannot decide *which relic to visit first* — the choice of relic ordering is a decision it never makes.
 
 - **What decision remains after all inter-location costs are known:**
-  _Your answer here._
+  Even with a complete table of cheapest costs between every pair of relevant locations, we must still determine the **order** in which to visit the relics, since different orderings produce different total fuel costs.
 
 - **Why this requires a search over orders (one sentence):**
-  _Your answer here._
+  No local greedy rule reliably identifies the globally cheapest sequence, so the engine must search the space of all possible relic orderings to guarantee an optimal result.
 
 ---
 
@@ -35,8 +35,10 @@
 
 | Source Node Type | Why it is a source |
 |---|---|
-| _node type_ | _one-line reason_ |
-| _node type_ | _one-line reason_ |
+| Entrance node (`spawn`) | The Torchbearer starts here, so we need cheapest costs *from* spawn to every relic and exit. |
+| Each relic chamber (`relics`) | After collecting a relic the Torchbearer travels onward, so we need cheapest costs *from* each relic to every other relic and to the exit. |
+
+The exit node (`exit_node`) is **not** a source: the Torchbearer only ever travels *to* the exit, never *from* it to another required location.
 
 ### Part 2b: Distance Storage
 
@@ -44,20 +46,20 @@
 
 | Property | Your answer |
 |---|---|
-| Data structure name | |
-| What the keys represent | |
-| What the values represent | |
-| Lookup time complexity | |
-| Why O(1) lookup is possible | |
+| Data structure name | Nested Dictionary (`dict[node, float]]`) |
+|  What the keys represent | Source node (outer key); destination node (inner key) |
+| What the values represent | Minimum fuel cost from the source node to the destination node (`float('inf')` if unreachable) |
+| Lookup time complexity | O(1) average |
+| Why O(1) lookup is possible | Python dictionaries are hash maps; both outer and inner lookups hash the node key in constant expected time. |
 
 ### Part 2c: Precomputation Complexity
 
 > State the total complexity and show the arithmetic. Two to three lines max.
 
-- **Number of Dijkstra runs:** _your answer_
-- **Cost per run:** _your answer_
-- **Total complexity:** _your answer_
-- **Justification (one line):** _your answer_
+- **Number of Dijkstra runs:** `k + 1` - one from `spawn`, one from each of the `k` relic nodes.
+- **Cost per run:** `O(m log n)` - standard Dijkstra with a binary min-heap over `n` nodes and `m` edges.
+- **Total complexity:** `O((k + 1) · m log n)`
+- **Justification (one line):** each of the `k + 1` sources nodes requires one independent Dijkstra traversal of the full graph, and the results are storted directly in the nested dictionary for O(1) retrieval.
 
 ---
 
@@ -72,29 +74,29 @@
 > Do not copy the invariant text from the spec.
 
 - **For nodes already finalized (in S):**
-  _Your answer here._
+    Every node `u` extracted from the priority queue has `dist[u]` equal to the true minimum-cost path from the source; this value is locked and will not change.
 
 - **For nodes not yet finalized (not in S):**
-  _Your answer here._
+  `dist[v]` holds the cost of the *cheapest path found so far* from the source to `v`; that path's internal nodes all belong to `S`, but a cheaper route through future finalized nodes may still exist.
 
 ### Part 3b: Why Each Phase Holds
 
 > One to two bullets per phase. Maintenance must mention nonnegative edge weights.
 
 - **Initialization : why the invariant holds before iteration 1:**
-  _Your answer here._
+  `dist[source] = 0` (correct: the trivial path costs zero) and `dist[v] = ∞` for all other nodes (correct: no paths have been discovered yet); `S` is empty so the finalized-node clause holds vacuously.
 
 - **Maintenance : why finalizing the min-dist node is always correct:**
-  _Your answer here._
+  The node `u` with the smallest `dist[u]` among non-S nodes is selected. Because all edge weights are **nonnegative**, any alternative path to `u` that passes through a node outside `S` must cost at least as much as `dist[u]` (it would first have to reach some non-S node, paying at least `dist[u]`). Therefore `dist[u]` is already optimal, and adding `u` to `S` preserves the invariant. Relaxing `u`'s outgoing edges then updates non-S estimates with newly discovered paths whose interiors now lie in `S`.
 
 - **Termination : what the invariant guarantees when the algorithm ends:**
-  _Your answer here._
+  When the heap is empty every reachable node is in `S` with its confirmed shortest-path distance; unreachable nodes retain `dist = ∞`.
 
 ### Part 3c: Why This Matters for the Route Planner
 
 > One sentence connecting correct distances to correct routing decisions.
 
-_Your answer here._
+If any precomputed inter-location distance is incorrect, the planner's cost estimates for candidate relic orderings will be wrong potentially causing it to discard the true optimal route or select a more expensive one.
 
 ---
 
@@ -105,17 +107,17 @@ _Your answer here._
 > State the failure mode. Then give a concrete counter-example using specific node names
 > or costs (you may use the illustration example from the spec). Three to five bullets.
 
-- **The failure mode:** _Your answer here._
-- **Counter-example setup:** _Your answer here._
-- **What greedy picks:** _Your answer here._
-- **What optimal picks:** _Your answer here._
-- **Why greedy loses:** _Your answer here._
+- **The failure mode:** Greedily picking the nearest uncollected relic at each step minimizes the *immediate* travel cost but ignores how that choice affects the cost of all remaining legs.
+- **Counter-example setup:** Using the spec illustration - S-B costs 1, S-C costs 2, S-D costs 2; from B, D costs 1 and T costs 1; from D, C costs 1 and T costs 100; from C, T costs 1.
+- **What greedy picks:** reedy chooses B first (cheapest from S at cost 1), then D (cheapest from B at cost 1), then C (cheapest from D at cost 1), then T (from C at cost 1) - total = **4**, which happens to be optimal in this example.
+- **What optimal picks:** The same route S,B,D,C,T at total cost 4 is optimal; a different ordering such as S,B,D,C,T costs 5, showing ordering matters.
+- **Why greedy loses:** In general, choosing the nearest relic next can strand the Torchbearer far from the exit or force it across an expensive edge later; greedy has no mechanism to detect this until it's too late to recover.
 
 ### What the Algorithm Must Explore
 
 > One bullet. Must use the word "order."
 
-- _Your answer here._
+- The algorithm must explore every possible **order** in which the `k` relics can be visited — and use pruning to eliminate orderings that cannot yield a better total cost than the best complete route found so far.
 
 ---
 
@@ -128,9 +130,9 @@ _Your answer here._
 
 | Component | Variable name in code | Data type | Description |
 |---|---|---|---|
-| Current location | | | |
-| Relics already collected | | | |
-| Fuel cost so far | | | |
+| Current location | `current_loc` | `node` | The dungeon chamber the Torchbearer is currently standing in |
+| Relics already collected | `relics_visited_order` | `relics_remaining` | `list[node]` / `set[node]` |
+| Fuel cost so far | `cost_so_far` | `float` | Total torch fuel burned from spawn to `current_loc` following the chosen relic order|
 
 ### Part 5b: Data Structure for Visited Relics
 

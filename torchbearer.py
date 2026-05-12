@@ -68,7 +68,10 @@ def select_sources(spawn, relics, exit_node):
     list[node]
         No duplicates. Order does not matter.
 
-    TODO
+    We run Dijkstra from the spawn and from every relic.
+    The exit node is never a source because we only ever travel *to* it,
+    never *from* it to another required location.
+
     """
     sources = set()
     sources.add(spawn)
@@ -92,7 +95,7 @@ def run_dijkstra(graph, source):
         Minimum cost from source to every node in graph.
         Unreachable nodes map to float('inf').
 
-    TODO
+    Standard Dijkstra with a binary min-heap.
     """
     dist = {node: float('inf') for node in graph}
     dist[source] = 0
@@ -130,7 +133,8 @@ def precompute_distances(graph, spawn, relics, exit_node):
         Nested structure supporting dist_table[u][v] lookups
         for every source u your design requires.
 
-    TODO
+    We run one Dijkstra per source node (spawn + each relic).
+    This gives us O((k+1) * (m log n)) total precomputation time.
     """
     sources = select_sources(spawn, relics, exit_node)
     dist_table = {}
@@ -151,9 +155,34 @@ def dijkstra_invariant_check():
         Your Part 3 README answers, written as a string.
         Must match what you wrote in README Part 3.
 
-    TODO
     """
-    return "TODO"
+    return (
+        "Part 3a - Invariant explanation:\n"
+        "Finalized nodes (in S): Every node u that has been extracted from the heap has "
+        "dist[u] equal to the true shortest-path cost from the source; no future "
+        "relaxation can improve it.\n"
+        "Non-finalized nodes (not in S): dist[v] holds the cost of the cheapest "
+        "path discovered so far from the source to v, where all intermediate nodes "
+        "on that path belong to S.\n\n"
+
+        "Part 3b - Why each phase holds:\n"
+        "Initialization: Before any iteration, dist[source] = 0 and dist[v] = inf for "
+        "all other v; the set S is empty, so the invariant holds vacuously for S, and "
+        "every non-S estimate reflects the best (and only) discovered path so far.\n"
+        "Maintenance: The node u with the minimum dist[u] is finalized because all edge "
+        "weights are nonnegative, meaning no undiscovered path through any node outside "
+        "S can arrive at u more cheaply than the direct best-known estimate; adding u "
+        "to S and relaxing its outgoing edges updates non-S estimates to reflect any "
+        "newly discovered shorter paths whose interior now lies entirely in S.\n"
+        "Termination: When the heap is empty, every reachable node is in S with its "
+        "true shortest-path distance, and unreachable nodes retain dist = inf.\n\n"
+
+        "Part 3c - Why correctness matters for routing:\n"
+        "If any precomputed distance is wrong, the planner's cost estimates for "
+        "candidate routes will be wrong, potentially causing it to discard the true "
+        "optimal route or select a suboptimal one."
+            
+    )
 
 
 # =============================================================================
@@ -168,9 +197,30 @@ def explain_search():
         Your Part 4 README answers, written as a string.
         Must match what you wrote in README Part 4.
 
-    TODO
+    
     """
-    return "TODO"
+    return (
+        "Why Greedy Fails:\n"
+        "Failure mode: A greedy algorithm always travels to the nearest uncollected "
+        "relic next; this local choice can force an expensive detour later that a "
+        "different ordering would have avoided entirely.\n"
+        "Counter-example setup: Using the spec illustration — S→B costs 1, S→C costs 2, "
+        "S→D costs 2; from B, going to D costs 1 and to T costs 1.\n"
+        "What greedy picks: Greedy from S picks B first (cheapest at cost 1), then must "
+        "decide between C and D; if it then picks the nearest remaining relic the total "
+        "may be suboptimal depending on the next step.\n"
+        "What optimal picks: The optimal route S→B→D→C→T costs 4 total by ordering "
+        "relics to avoid expensive cross-edges.\n"
+        "Why greedy loses: The cheapest next step locally can force a high-cost edge "
+        "later; greedy never looks ahead to consider how the current choice affects "
+        "remaining travel costs.\n\n"
+
+        "What the Algorithm Must Explore:\n"
+        "The algorithm must explore every possible order in which the relics can be "
+        "visited, because only by comparing all orderings (or pruning provably "
+        "suboptimal ones) can it guarantee the globally cheapest route."
+    
+    )
 
 
 # =============================================================================
@@ -197,7 +247,23 @@ def find_optimal_route(dist_table, spawn, relics, exit_node):
 
     TODO
     """
-    pass
+        # best[0] = best cost found so far; best[1] = corresponding relic order.
+    best = [float('inf'), []]
+
+    # relics_remaining is a set for O(1) membership, add, and remove (backtrack).
+    relics_remaining = set(relics)
+
+    _explore(
+        dist_table=dist_table,
+        current_loc=spawn,
+        relics_remaining=relics_remaining,
+        relics_visited_order=[],
+        cost_so_far=0.0,
+        exit_node=exit_node,
+        best=best,
+    )
+
+    return (best[0], best[1])
 
 
 def _explore(dist_table, current_loc, relics_remaining, relics_visited_order,

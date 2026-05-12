@@ -1,7 +1,7 @@
 # Development Log – The Torchbearer
 
-**Student Name:** ___________________________
-**Student ID:** ___________________________
+**Student Name:** ___Alan Vo________________________
+**Student ID:** _______132574829____________________
 
 > Instructions: Write at least four dated entries. Required entry types are marked below.
 > Two to five sentences per entry is sufficient. Write entries as you go, not all in one
@@ -10,21 +10,27 @@
 
 ---
 
-## Entry 1 – [Date]: Initial Plan
+## Entry 1 – [5/11]: Initial Plan
 
 > Required. Write this before writing any code. Describe your plan: what you will
 > implement first, what parts you expect to be difficult, and how you plan to test.
 
-_Your entry here._
+I'll implement Dijkstra first since the search depends on correct distances, 
+and I'll test it on the spec's illustration graph before wiring up the recursive search. 
+The parts I expect to be hardest are the lower-bound pruning logic and ensuring backtracking 
+correctly restores state between recursive calls.
 
 ---
 
-## Entry 2 – [Date]: [Short description]
+## Entry 2 – [5/11]: [Pruning]
 
 > Required. At least one entry must describe a bug, wrong assumption, or design change
 > you encountered. Describe what went wrong and how you resolved it.
 
-_Your entry here._
+Fix: Only compute a lower bound when relics_remaining is non-empty.
+Previously the bound was checked before the base case, causing completed
+routes to be pruned. Now the base case runs first and only partial routes
+are subject to pruning.
 
 ---
 
