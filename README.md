@@ -140,18 +140,19 @@ If any precomputed inter-location distance is incorrect, the planner's cost esti
 
 | Property | Your answer |
 |---|---|
-| Data structure chosen | |
-| Operation: check if relic already collected | Time complexity: |
-| Operation: mark a relic as collected | Time complexity: |
-| Operation: unmark a relic (backtrack) | Time complexity: |
-| Why this structure fits | |
+| Data structure chosen | Python `set` (for `relics_remaining`); Python `list` (for `relics_visited_order`) |
+| Operation: check if relic already collected | Time complexity: O(1) average — `r not in relics_remaining` hashes the key |
+| Operation: mark a relic as collected | Time complexity: O(1) average — `relics_remaining.remove(r)` |
+| Operation: unmark a relic (backtrack) | Time complexity: Time complexity: O(1) average — `relics_remaining.add(r)` |
+| Why this structure fits | The set gives constant-time membership tests and O(1) add/remove for backtracking; 
+the companion list records visit order at negligible extra cost. |
 
 ### Part 5c: Worst-Case Search Space
 
 > Two bullets.
 
-- **Worst-case number of orders considered:** _Your answer (in terms of k)._
-- **Why:** _One-line justification._
+- **Worst-case number of orders considered:**  `k!` (k factorial), where `k = |M|`.
+- **Why:** At the first step there are `k` choices of relic, at the second step `k−1`, and so on; without pruning every permutation of the `k` relics is a candidate, giving `k!` total orderings.
 
 ---
 
@@ -161,23 +162,24 @@ If any precomputed inter-location distance is incorrect, the planner's cost esti
 
 > Three bullets.
 
-- **What is tracked:** _Your answer here._
-- **When it is used:** _Your answer here._
-- **What it allows the algorithm to skip:** _Your answer here._
+- **What is tracked:** `best` holding the lowest complete-route fuel cost found so far (`best[0]`) and the corresponding relic ordering (`best[1]`); initialized to `(∞, [])`
+- **When it is used:** Before recursing into any next-relic choice and immediately after reaching the exit node, `cost_so_far` (or the completed total) is compared against `best[0]`.
+- **What it allows the algorithm to skip:** Any branch where the accumulated cost already equals or exceeds `best[0]` is pruned immediately no further recursion is needed, since completing that branch cannot improve the best solution.
 
 ### Part 6b: Lower Bound Estimation
 
 > Three bullets.
 
-- **What information is available at the current state:** _Your answer here._
-- **What the lower bound accounts for:** _Your answer here._
-- **Why it never overestimates:** _Your answer here._
+- **What information is available at the current state:** We know `cost_so_far`, `current_loc`, the set of `relics_remaining`, and the precomputed `dist_table`.
+- **What the lower bound accounts for:** The cheapest possible future cost: `min over all remaining relics r of (dist[current_loc->r] + dist[r->exit])`. This captures the mandatory cost of reaching at least one more relic and then the exit.
+- **Why it never overestimates:** It assumes the single best next-relic leg and the single best exit leg from that relic.
 
 ### Part 6c: Pruning Correctness
 
 > One to two bullets. Explain why pruning is safe.
 
-- _Your answer here._
+- If the lower bound on completing a branch already meets or exceeds the best known cost, no route through that branch can improve the answer, so skipping it is safe.
+- The optimal solution is never pruned because the lower bound never overestimates: if the true optimal route exists somewhere in a branch, its actual cost beats `best[0]`, so the lower bound also beats `best[0]`, and the branch survives.
 
 ---
 
@@ -185,4 +187,4 @@ If any precomputed inter-location distance is incorrect, the planner's cost esti
 
 > Bullet list. If none beyond lecture notes, write that.
 
-- _Your references here._
+- Lecture notes

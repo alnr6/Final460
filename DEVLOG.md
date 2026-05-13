@@ -34,9 +34,11 @@ are subject to pruning.
 
 ---
 
-## Entry 3 – [Date]: [Short description]
+## Entry 3 – [5/12]: [Backtrack]
 
-_Your entry here._
+The set's add/remove pattern is O(1) and symmetric, so backtracking is clean. 
+I also verified that select_sources correctly excludes the exit node
+and de-duplicates via a Python set before returning a list
 
 ---
 
@@ -45,7 +47,7 @@ _Your entry here._
 > Required. Written after your implementation is complete. Describe what you would
 > change or improve given more time.
 
-_Your entry here._
+Given more time I would look at two improvements: first, visiting states in order of most-promising-first (lowest cost + lower bound) rather than plain DFS, which would find the optimal route faster by not chasing dead ends as long; second, caching results for repeated pairs so the algorithm never solves the same subproblem twice, which is the standard way to handle it.
 
 ---
 
@@ -55,12 +57,12 @@ _Your entry here._
 
 | Part | Estimated Hours |
 |---|---|
-| Part 1: Problem Analysis | |
-| Part 2: Precomputation Design | |
-| Part 3: Algorithm Correctness | |
-| Part 4: Search Design | |
-| Part 5: State and Search Space | |
-| Part 6: Pruning | |
-| Part 7: Implementation | |
-| README and DEVLOG writing | |
-| **Total** | |
+| Part 1: Problem Analysis | .75 |
+| Part 2: Precomputation Design | 1 |
+| Part 3: Algorithm Correctness | 2 |
+| Part 4: Search Design | .75 |
+| Part 5: State and Search Space | .5 |
+| Part 6: Pruning | 2 |
+| Part 7: Implementation | 2.5 |
+| README and DEVLOG writing | 1 |
+| **Total** | 10.5 |
